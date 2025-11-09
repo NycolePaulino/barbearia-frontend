@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import { useRouter } from "next/navigation";
 import { Loader2Icon } from "lucide-react";
 import Header from "../_components/header";
+import Footer from "../_components/footer";
 import BookingItem from "../_components/booking-item";
-
+import { PageContainer, PageSection, PageSectionTitle } from "../_components/ui/page";
+import { useQuery } from "@tanstack/react-query";
 
 interface BarbershopService {
     id: string;
@@ -26,57 +28,51 @@ interface Barbershop {
     phones: string[];
 }
 
-
 export interface BookingResponse {
     id: string;
-    date: string; 
+    date: string;
     cancelled: boolean;
     service: BarbershopService;
     barbershop: Barbershop;
 }
 
+const fetchMyBookings = async (token: string): Promise<BookingResponse[]> => {
+    const response = await fetch("http://localhost:8080/api/bookings/my-bookings", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+        throw new Error("Falha ao buscar agendamentos.");
+    }
+    return response.json();
+};
+
 const BookingsPage = () => {
     const { user, token } = useAuth();
     const router = useRouter();
-    
-    const [bookings, setBookings] = useState<BookingResponse[]>([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-
         if (token === null) {
             router.push("/");
-            return;
         }
+    }, [token, router]);
 
-        // Função para buscar os dados
-        const fetchBookings = async () => {
-        try {
-            setLoading(true);
-            const response = await fetch("http://localhost:8080/api/bookings/my-bookings", {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`, 
-                },
-            });
+    const { data: bookings, isLoading, isError } = useQuery<BookingResponse[]>({
+        queryKey: ["my-bookings"],
+        queryFn: () => fetchMyBookings(token!),
+        enabled: !!token,
+    });
 
-            if (response.ok) {
-                const data = await response.json();
-                setBookings(data);
-            } else {
-                console.error("Falha ao buscar agendamentos");
-            }
-        } catch (error) {
-            console.error("Erro no fetch:", error);
-        } finally {
-            setLoading(false);
-        }
-        };
+    const now = new Date();
+    const confirmedBookings =
+        bookings?.filter(
+            (b) => !b.cancelled && new Date(b.date) >= now
+        ) ?? [];
+    const finishedBookings =
+        bookings?.filter(
+            (b) => b.cancelled || new Date(b.date) < now
+        ) ?? [];
 
-        fetchBookings();
-    }, [token, router]); 
-
-    if (loading) {
+    if (!token || isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <Loader2Icon className="h-8 w-8 animate-spin" />
@@ -84,23 +80,52 @@ const BookingsPage = () => {
         );
     }
 
-    return (
-        <>
-            <Header />
-            <div className="flex flex-col gap-6 p-5">
-                <h1 className="text-xl font-bold">Meus Agendamentos</h1>
-                
-                {bookings.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                    {bookings.map((booking) => (
-                    <BookingItem key={booking.id} booking={booking} />
-                    ))}
-                </div>
-                ) : (
-                <p className="text-muted-foreground">Nenhum agendamento encontrado.</p>
-                )}
+    if (isError) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <p className="text-muted-foreground text-center text-sm">
+                    Erro ao carregar agendamentos. Tente novamente mais tarde.
+                </p>
             </div>
-        </>
+        );
+    }
+
+    return (
+        <main>
+            <Header />
+            <PageContainer>
+                <h1 className="text-foreground text-xl font-bold">Agendamentos</h1>
+
+                {confirmedBookings.length > 0 && (
+                    <PageSection>
+                        <PageSectionTitle>Confirmados</PageSectionTitle>
+                        <div className="space-y-3">
+                            {confirmedBookings.map((booking) => (
+                                <BookingItem key={booking.id} booking={booking} />
+                            ))}
+                        </div>
+                    </PageSection>
+                )}
+
+                {finishedBookings.length > 0 && (
+                    <PageSection>
+                        <PageSectionTitle>Finalizados</PageSectionTitle>
+                        <div className="space-y-3">
+                            {finishedBookings.map((booking) => (
+                                <BookingItem key={booking.id} booking={booking} />
+                            ))}
+                        </div>
+                    </PageSection>
+                )}
+
+                {bookings?.length === 0 && (
+                    <p className="text-muted-foreground text-center text-sm">
+                        Você ainda não tem agendamentos.
+                    </p>
+                )}
+            </PageContainer>
+            <Footer />
+        </main>
     );
 };
 
