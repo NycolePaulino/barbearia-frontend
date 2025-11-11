@@ -6,7 +6,15 @@ import { jwtDecode, JwtPayload } from "jwt-decode";
 import { useSearchParams } from "next/navigation";
 
 interface User {
-  	email: string;
+	email: string;
+	name: string;
+	picture: string;
+}
+
+interface CustomJwtPayload extends JwtPayload {
+	sub: string;
+	name: string;
+	picture: string;
 }
 
 interface AuthContextType {
@@ -33,17 +41,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 	const login = useCallback((token: string) => {
 		try {
-		const decodedToken = jwtDecode<JwtPayload & { sub: string }>(token);
+		const decodedToken = jwtDecode<CustomJwtPayload>(token);
 
 		if (decodedToken.exp && decodedToken.exp * 1000 > Date.now()) {
 			setToken(token);
-			setUser({ email: decodedToken.sub });
+			
+			setUser({
+			email: decodedToken.sub,
+			name: decodedToken.name,
+			picture: decodedToken.picture,
+			});
 			localStorage.setItem("jwtToken", token);
 		} else {
 			logout();
 		}
 		} catch (error) {
-		console.error("Falha ao decodificar token:", error);
+			console.error("Falha ao decodificar token:", error);
 		logout(); 
 		}
 	}, [logout]);
@@ -61,7 +74,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 			setTimeout(() => login(storedToken), 0); 
 			}
 		}
-	}, [searchParams, login]);
+	}, [searchParams, login])
 
 
 	return (

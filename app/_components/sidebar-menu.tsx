@@ -16,29 +16,27 @@ import { SheetClose } from "./ui/sheet";
 const SidebarMenu = () => {
     const { user, logout } = useAuth(); 
 
-    // 3. Definimos a URL de login do nosso back-end Java
+    // definindo a URL de login do back end
     const googleLoginUrl = "http://localhost:8080/oauth2/authorization/google";
-
-    // Não precisamos mais do handleLogin ou handleLogout do 'better-auth'
 
     return (
         <div className="flex h-full flex-col gap-6 py-6">
             <div className="px-5">
                 {user ? (
-                <div className="flex items-center gap-3">
-                    <Avatar className="size-12">
-                        <AvatarImage src={""} /> 
-                        <AvatarFallback>
-                            {user.email.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col leading-tight">
-                        <p className="text-base font-semibold">{user.email.split('@')[0]}</p>
-                        <p className="text-muted-foreground text-xs">
-                            {user.email}
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <Avatar className="size-12">
+                            <AvatarImage src={user.picture} alt={user.name} /> 
+                            <AvatarFallback>
+                                {user.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col leading-tight">
+                            <p className="text-base font-semibold">{user.name}</p>
+                            <p className="text-muted-foreground text-xs">
+                                {user.email}
+                            </p>
+                        </div>
                     </div>
-                </div>
                 ) : (
                 <div className="flex items-center justify-between">
                     <div className="flex h-12 items-center">
