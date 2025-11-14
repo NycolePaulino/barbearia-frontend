@@ -27,7 +27,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
             {user ? (
             <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Olá, {user.name.split(' ')[0]}</span> 
+                <span className="text-sm font-medium">Olá, {(user.name ?? user.email).split(' ')[0]}</span>
                 <Button variant="outline" size="icon" onClick={logout}>
                     <LogOutIcon />
                 </Button>

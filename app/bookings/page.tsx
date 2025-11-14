@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth";
 import { useRouter } from "next/navigation";
 import { Loader2Icon } from "lucide-react";
@@ -47,16 +47,19 @@ const fetchMyBookings = async (token: string): Promise<BookingResponse[]> => {
 };
 
 const BookingsPage = () => {
-    const { user, token } = useAuth();
+    const { user, token, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
 
+    const [authLoading, setAuthLoading] = useState(true);
+    
     useEffect(() => {
-        if (token === null) {
-            router.push("/");
+        if (!isAuthLoading && !token) {
+        router.push("/");
         }
-    }, [token, router]);
+    }, [isAuthLoading, token, router]);
 
-    const { data: bookings, isLoading, isError } = useQuery<BookingResponse[]>({
+
+    const { data: bookings, isLoading: isBookingsLoading, isError } = useQuery<BookingResponse[]>({
         queryKey: ["my-bookings"],
         queryFn: () => fetchMyBookings(token!),
         enabled: !!token,
@@ -72,7 +75,7 @@ const BookingsPage = () => {
             (b) => b.cancelled || new Date(b.date) < now
         ) ?? [];
 
-    if (!token || isLoading) {
+    if (isAuthLoading || (token && isBookingsLoading)) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <Loader2Icon className="h-8 w-8 animate-spin" />

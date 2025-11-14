@@ -2,10 +2,16 @@
 
 import { useAuth } from "../../lib/auth";
 import {
-  CalendarDaysIcon,
-  HomeIcon,
-  LogInIcon,
-  LogOutIcon,
+    CalendarDaysIcon,
+    Eye, 
+    Footprints, 
+    HomeIcon,
+    LogInIcon,
+    LogOutIcon,
+    Scissors, 
+    Sparkles, 
+    User, 
+    Waves, 
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -31,7 +37,7 @@ const SidebarMenu = () => {
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col leading-tight">
-                            <p className="text-base font-semibold">{user.name}</p>
+                            <p className="text-base font-semibold">{user.name ?? user.email}</p>
                             <p className="text-muted-foreground text-xs">
                                 {user.email}
                             </p>
@@ -83,44 +89,78 @@ const SidebarMenu = () => {
         </div>
 
         <Separator />
-
         <div className="flex flex-col gap-1">
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Cabelo</span>
-            </Button>
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Barba</span>
-            </Button>
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Acabamento</span>
-            </Button>
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Sombrancelha</span>
-            </Button>
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Massagem</span>
-            </Button>
-            <Button
-                variant="ghost"
-                className="h-10 w-full cursor-default justify-start rounded-full px-5 py-3 hover:bg-transparent"
-            >
-                <span className="text-sm font-medium">Hidratação</span>
-            </Button>
+            <SheetClose asChild>
+                <Link href="/barbershops?search=cabelo">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <Scissors className="size-4" />
+                    <span className="text-sm font-medium">Cabelo</span>
+                </Button>
+                </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+                <Link href="/barbershops?search=barba">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <User className="size-4" />
+                    <span className="text-sm font-medium">Barba</span>
+                </Button>
+                </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+                <Link href="/barbershops?search=acabamento">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <Sparkles className="size-4" />
+                    <span className="text-sm font-medium">Acabamento</span>
+                </Button>
+                </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+                <Link href="/barbershops?search=sobrancelha">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <Eye className="size-4" />
+                    <span className="text-sm font-medium">Sobrancelha</span>
+                </Button>
+                </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+                <Link href="/barbershops?search=pézinho">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <Footprints className="size-4" />
+                    <span className="text-sm font-medium">Pézinho</span>
+                </Button>
+                </Link>
+            </SheetClose>
+
+            <SheetClose asChild>
+                <Link href="/barbershops?search=progressiva">
+                <Button
+                    variant="ghost"
+                    className="h-auto w-full justify-start gap-3 rounded-full px-5 py-3"
+                >
+                    <Waves className="size-4" />
+                    <span className="text-sm font-medium">Progressiva</span>
+                </Button>
+                </Link>
+            </SheetClose>
         </div>
 
         <Separator />

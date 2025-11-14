@@ -20,6 +20,7 @@ interface CustomJwtPayload extends JwtPayload {
 interface AuthContextType {
 	user: User | null;
 	token: string | null;
+	isLoading: boolean;
 	login: (token: string) => void;
 	logout: () => void;
 }
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [token, setToken] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
 	const searchParams = useSearchParams();
 
@@ -63,22 +65,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 
 	useEffect(() => {
-		const tokenFromUrl = searchParams.get("token");
+		const initializeAuth = () => {
+			const tokenFromUrl = searchParams.get("token");
 
-		if (tokenFromUrl) {
-			setTimeout(() => login(tokenFromUrl), 0); 
-			window.history.replaceState(null, "", "/");
-		} else {
-			const storedToken = localStorage.getItem("jwtToken");
-			if (storedToken) {
-			setTimeout(() => login(storedToken), 0); 
+			if (tokenFromUrl) {
+				setTimeout(() => login(tokenFromUrl), 0);
+				window.history.replaceState(null, "", "/");
+			} else {
+				const storedToken = localStorage.getItem("jwtToken");
+				if (storedToken) {
+					setTimeout(() => login(storedToken), 0);
+				}
 			}
-		}
-	}, [searchParams, login])
+
+			setIsLoading(false);
+		};
+
+		initializeAuth();
+	}, [searchParams, login]);
+
 
 
 	return (
-		<AuthContext.Provider value={{ user, token, login, logout }}>
+		<AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
 			{children}
 		</AuthContext.Provider>
 	);
