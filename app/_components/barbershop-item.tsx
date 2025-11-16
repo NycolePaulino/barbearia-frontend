@@ -1,5 +1,19 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link"; 
+import Link from "next/link";
+import { Icon } from "@iconify/react";
+import { Button } from "./ui/button";
+import { Avatar, AvatarImage } from "./ui/avatar";
+
+interface BarbershopService {
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    priceInCents: number;
+    barbershopId: string;
+}
 
 interface Barbershop {
     id: string;
@@ -10,29 +24,70 @@ interface Barbershop {
     phones: string[];
 }
 
-interface BarbershopItemProps {
+interface ServiceSearchResponse {
+    service: BarbershopService;
     barbershop: Barbershop;
 }
 
-const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
+interface SearchResultItemProps {
+    data: ServiceSearchResponse;
+}
+
+const SearchResultItem = ({ data }: SearchResultItemProps) => {
+    const { service, barbershop } = data;
+
+    const priceInReais = (service.priceInCents / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+
     return (
-        <Link 
-            href={`/barbershops/${barbershop.id}`} 
-            className="relative min-h-[200px] min-w-[290px] rounded-xl"
-        >
-            <div className="absolute top-0 left-0 z-10 h-full w-full rounded-lg bg-linear-to-t from-black to-transparent" />
-            <Image
-                src={barbershop.imageUrl}
-                alt={barbershop.name}
-                fill
-                className="rounded-xl object-cover"
-            />
-            <div className="absolute right-0 bottom-0 left-0 z-20 p-4">
-                <h3 className="text-background text-lg font-bold">{barbershop.name}</h3>
-                <p className="text-background text-xs">{barbershop.address}</p>
+        <div className="flex items-center justify-center gap-3 rounded-2xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-3">
+            <div className="relative size-[110px] shrink-0 overflow-hidden rounded-[10px]">
+                <Image
+                    src={service.imageUrl}
+                    alt={service.name}
+                    fill
+                    className="object-cover"
+                />
             </div>
-        </Link>
+
+            <div className="flex grow basis-0 flex-row items-center self-stretch">
+                <div className="relative flex h-full min-h-0 min-w-0 grow basis-0 flex-col items-start justify-between">
+                    <div className="flex h-full w-full flex-col items-start gap-1 text-sm leading-[1.4]">
+                        <p className="text-text-primary-light dark:text-text-primary-dark w-full font-bold">
+                            {service.name}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={barbershop.imageUrl} />
+                            </Avatar>
+                            <p className="text-muted-light dark:text-muted-dark text-sm">
+                                {barbershop.name}
+                            </p>
+                        </div>
+
+                        <p className="text-muted-light dark:text-muted-dark w-full font-normal">
+                            {service.description}
+                        </p>
+                    </div>
+
+                    <div className="flex w-full items-center justify-between">
+                        <p className="text-primary text-sm leading-[1.4] font-bold whitespace-pre">
+                            {priceInReais}
+                        </p>
+
+                        <Button className="rounded-full px-4 py-2" asChild>
+                            <Link href={`/barbershops/${barbershop.id}`}>
+                                Agendar
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 
-export default BarbershopItem;
+export default SearchResultItem;

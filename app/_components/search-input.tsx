@@ -1,10 +1,8 @@
 "use client";
 
-import { SearchIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
 const SearchInput = () => {
     const router = useRouter();
@@ -17,22 +15,21 @@ const SearchInput = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <Input
-                type="text"
-                placeholder="Pesquise serviços ou barbearias"
-                className="border-border rounded-full"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button
-                type="submit"
-                variant="default"
-                size="icon"
-                className="rounded-full"
-            >
-                <SearchIcon />
-            </Button>
+        <form onSubmit={handleSubmit} className="flex-grow">
+            <label className="flex flex-col min-w-40 h-12 w-full">
+                <div className="flex w-full items-center rounded-lg h-full border border-border bg-card-light dark:bg-card-dark overflow-hidden">
+                    <div className="flex items-center justify-center h-full px-4 border-r border-border text-muted-light dark:text-muted-dark bg-card-light dark:bg-card-dark">
+                        <Search size={18} />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Buscar por serviços..."
+                        className="flex-1 h-full bg-transparent px-3 outline-none border-none focus:ring-0"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            </label>
         </form>
     );
 };

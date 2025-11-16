@@ -1,19 +1,27 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2Icon } from "lucide-react";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
-import { Button } from "../../_components/ui/button";
-import { Separator } from "../../_components/ui/separator";
-import { ServiceItem } from "../../_components/service-item";
-import { PhoneItem } from "../../_components/phone-item";
+import { Icon } from "@iconify/react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { useAuth } from "../../../lib/auth";
 
+import ServiceItem from "../../_components/service-item";
+import BarbershopInfo from "../../_components/barbershop-info";
+import BookingSummaryCard from "../../_components/booking-summary-card";
+import BookingCalendarCard from "../../_components/booking-calendar-card";
 
-interface BarbershopService {
+interface Service {
     id: string;
     name: string;
-    description: string;
-    imageUrl: string;
     priceInCents: number;
+    description: string;
     barbershopId: string;
+    imageUrl: string;
 }
 
 interface Barbershop {
@@ -23,190 +31,237 @@ interface Barbershop {
     description: string;
     imageUrl: string;
     phones: string[];
-    services: BarbershopService[];
+    services: Service[];
 }
-
-interface PageProps {
-    params: {
-        id: string;
-    };
-}
-
 
 const getBarbershopDetails = async (id: string): Promise<Barbershop | null> => {
     try {
-        const response = await fetch(`http://localhost:8080/api/barbershops/${id}`, {
-            cache: "no-store",
-        });
-
-        if (!response.ok) {
-            console.error(`Falha na resposta: Status ${response.status} para o ID: ${id}`);
-            return null;
-        }
-
+        const response = await fetch(`http://localhost:8080/api/barbershops/${id}`);
+        if (!response.ok) return null;
         return response.json();
-    } catch (error) {
-        console.error("Falha ao buscar detalhes da barbearia:", error);
+    } catch {
         return null;
     }
 };
 
+const fetchAvailableTimeSlots = async (
+    token: string,
+    barbershopId: string,
+    selectedDate: Date
+) => {
+    const dateParam = format(selectedDate, "yyyy-MM-dd");
+    const response = await fetch(
+        `http://localhost:8080/api/barbershops/${barbershopId}/available-times?date=${dateParam}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error("Falha ao buscar horários.");
+    return response.json();
+};
 
-const BarbershopPage = async ({ params }: PageProps) => {
-    const resolvedParams = await Promise.resolve(params);
-    const id = resolvedParams.id;
-    
-    if (!id) {
+const BarbershopDetailsPage = () => {
+    const router = useRouter();
+    const params = useParams();
+    const barbershopId = params.id as string;
+    const { user, token } = useAuth();
+
+    const [step, setStep] = useState<"services" | "calendar">("services");
+    const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+    const [selectedTime, setSelectedTime] = useState<string | undefined>();
+    const [isBookingPending, setIsBookingPending] = useState(false);
+
+    const { data: barbershop, isLoading: isLoadingBarbershop } = useQuery<Barbershop | null>({
+        queryKey: ["barbershop", barbershopId],
+        queryFn: () => getBarbershopDetails(barbershopId),
+        enabled: !!barbershopId,
+    });
+
+    const services = barbershop?.services ?? [];
+
+    const { data: availableTimeSlots, isLoading: isLoadingTimeSlots } = useQuery<string[]>({
+        queryKey: ["available-time-slots", barbershopId, selectedDate],
+        queryFn: () => fetchAvailableTimeSlots(token!, barbershopId, selectedDate!),
+        enabled: !!selectedDate && !!token,
+    });
+
+    const handleAddService = (serviceToAdd: Service) => {
+        setSelectedServices((prev) => [...prev, serviceToAdd]);
+    };
+
+    const handleRemoveService = (serviceId: string) => {
+        setSelectedServices((prev) => prev.filter((s) => s.id !== serviceId));
+    };
+
+    const filteredServices = services.filter((s) =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const totalPrice = selectedServices.reduce((acc, s) => acc + s.priceInCents, 0);
+    const totalPriceInReais = (totalPrice / 100).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    });
+    const totalTimeInMinutes = selectedServices.length * 45;
+
+    const handleDateSelect = (date: Date | undefined) => {
+        setSelectedDate(date);
+        setSelectedTime(undefined);
+    };
+
+    const isConfirmDisabled = !selectedTime || isBookingPending || isLoadingTimeSlots;
+
+    const handleBookingSubmit = async () => {
+        if (!user || !token || !selectedTime || !selectedDate || selectedServices.length === 0) {
+            toast.error("Por favor, selecione data, hora e faça login.");
+            return;
+        }
+
+        setIsBookingPending(true);
+        const [hours, minutes] = selectedTime.split(":").map(Number);
+        const date = new Date(selectedDate);
+        date.setHours(hours, minutes);
+        const serviceToBook = selectedServices[0];
+
+        try {
+            const response = await fetch("http://localhost:8080/api/checkout/create-session", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    serviceId: serviceToBook.id,
+                    date: date.toISOString(),
+                }),
+            });
+
+            if (!response.ok) {
+                toast.error("Falha ao iniciar o processo de pagamento.");
+                setIsBookingPending(false);
+                return;
+            }
+
+            const { checkoutUrl } = await response.json();
+            if (!checkoutUrl) {
+                toast.error("Erro ao gerar o link de pagamento.");
+                setIsBookingPending(false);
+                return;
+            }
+
+            window.location.href = checkoutUrl;
+        } catch {
+            toast.error("Erro ao conectar com o servidor de pagamento.");
+            setIsBookingPending(false);
+        }
+    };
+
+    if (isLoadingBarbershop) {
         return (
-            <div className="p-5">
-            <Link href="/">
-                <Button variant="outline" size="icon">
-                    <ChevronLeft />
-                </Button>
-            </Link>
-            <h1 className="mt-5 text-xl font-bold">Erro: ID da Barbearia não fornecido.</h1>
+            <div className="flex h-screen items-center justify-center">
+                <Loader2Icon className="h-8 w-8 animate-spin" />
             </div>
         );
     }
 
-    const barbershop = await getBarbershopDetails(id);
-
     if (!barbershop) {
         return (
-        <div className="p-5">
-            <Link href="/">
-                <Button variant="outline" size="icon">
-                    <ChevronLeft />
-                </Button>
-            </Link>
-            <h1 className="mt-5 text-xl font-bold">Barbearia não encontrada.</h1>
-        </div>
+            <div className="flex h-screen items-center justify-center flex-col gap-4">
+                <h1 className="text-2xl font-bold">Barbearia não encontrada.</h1>
+                <Link href="/" className="text-primary hover:underline">
+                    Voltar para o início
+                </Link>
+            </div>
         );
     }
 
     return (
-        <div className="flex size-full flex-col items-start overflow-clip">
-            <div className="relative h-[297px] w-full">
-                <div className="absolute left-0 top-0 h-full w-full">
-                    <Image
-                        src={barbershop.imageUrl}
-                        alt={barbershop.name}
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-
-                {/* Botão Voltar */}
-                <div className="absolute left-0 top-0 flex w-full items-baseline gap-[91px] px-5 pb-0 pt-6">
-                    <Button
-                        size="icon"
-                        variant="secondary"
-                        className="overflow-clip rounded-full"
-                        asChild
+        <main className="layout-container flex h-full grow flex-col">
+            <div className="container mx-auto flex flex-1 flex-col px-6 py-8">
+                <div className="flex items-center gap-2 mb-6">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-1 text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark hover:text-text-primary-light dark:hover:text-text-primary-dark"
                     >
-                        <Link href="/">
-                            <ChevronLeft className="size-5" />
-                        </Link>
-                    </Button>
+                        <Icon icon="material-symbols:arrow-back-ios-new" className="text-base" />
+                        <span>Voltar para barbearias</span>
+                    </Link>
                 </div>
-            </div>
 
-            {/* Container Principal */}
-            <div className="w-full flex-1 rounded-tl-3xl rounded-tr-3xl bg-background">
-                <div className="flex w-full items-center gap-1.5 px-5 pb-0 pt-6">
-                    <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-start gap-1.5">
-                            <div className="relative size-[30px] shrink-0 overflow-hidden rounded-full">
-                                <Image
-                                    src={barbershop.imageUrl}
-                                    alt={barbershop.name}
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                            <p className="text-xl font-bold text-foreground">
-                                {barbershop.name}
+                <BarbershopInfo barbershop={barbershop} />
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+                        <div className="flex flex-wrap justify-between items-center gap-4">
+                            <p className="text-text-primary-light dark:text-text-primary-dark text-3xl font-extrabold tracking-tight">
+                                Escolha os serviços
                             </p>
+
+                            <div className="flex-grow max-w-sm">
+                                <label className="flex flex-col min-w-40 h-12 w-full">
+                                    <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
+                                        <div className="text-text-secondary-light dark:text-text-secondary-dark flex bg-surface-light dark:bg-surface-dark items-center justify-center pl-4 rounded-l-lg border border-border-light dark:border-border-dark border-r-0">
+                                            <Icon icon="material-symbols:search" className="text-lg" />
+                                        </div>
+                                        <input
+                                            className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary-light dark:text-text-primary-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark h-full placeholder:text-text-secondary-light dark:placeholder:text-text-secondary-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal"
+                                            placeholder="Pesquisar por um serviço..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                </label>
+                            </div>
                         </div>
-                        <div className="flex flex-col items-start gap-2">
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm text-muted-foreground">
-                                {barbershop.address}
+
+                        <div className="space-y-4">
+                            {filteredServices.length > 0 ? (
+                                filteredServices.map((service) => (
+                                    <ServiceItem
+                                        key={service.id}
+                                        service={service}
+                                        onAddService={() => handleAddService(service)}
+                                        onRemoveService={() => handleRemoveService(service.id)}
+                                        isSelected={selectedServices.some((s) => s.id === service.id)}
+                                    />
+                                ))
+                            ) : (
+                                <p className="text-text-secondary-light dark:text-text-secondary-dark text-center py-4">
+                                    Nenhum serviço encontrado.
                                 </p>
+                            )}
                         </div>
-                        </div>
                     </div>
-                </div>
-                <div className="px-0 py-6">
-                    <Separator />
-                </div>
 
-                {/* Sobre  */}
-                <div className="flex w-full flex-col items-start gap-3 px-5 py-0">
-                    <div className="flex items-center justify-center gap-2.5">
-                        <p className="text-xs font-bold uppercase text-foreground">
-                            SOBRE NÓS
-                        </p>
-                    </div>
-                    <p className="w-full text-sm text-foreground">
-                        {barbershop.description}
-                    </p>
-                </div>
-
-                <div className="px-0 py-6">
-                <Separator />
-                </div>
-
-                {/* Serviços */}
-                <div className="flex w-full flex-col items-start gap-3 px-5 py-0">
-                    <div className="flex items-center justify-center gap-2.5">
-                        <p className="text-xs font-bold uppercase text-foreground">
-                            SERVIÇOS
-                        </p>
-                    </div>
-                    <div className="flex w-full flex-col gap-3">
-                        {barbershop.services.map((service) => (
-                            <ServiceItem 
-                                key={service.id} 
-                                service={service}
-                                barbershopName={barbershop.name}
+                    <div className="lg:col-span-1 sticky top-28">
+                        {step === "services" ? (
+                            <BookingSummaryCard
+                                selectedServices={selectedServices}
+                                totalPriceInReais={totalPriceInReais}
+                                totalTimeInMinutes={totalTimeInMinutes}
+                                onRemoveService={handleRemoveService}
+                                onNextStep={() => setStep("calendar")}
                             />
-                        ))}
-                    </div>
-                </div>
-
-                <div className="px-0 py-6">
-                    <Separator />
-                </div>
-
-                {/* Contato */}
-                <div className="flex w-full flex-col items-start gap-3 px-5 py-0">
-                    <div className="flex items-center justify-center gap-2.5">
-                        <p className="text-xs font-bold uppercase text-foreground">
-                            CONTATO
-                        </p>
-                    </div>
-                    <div className="flex w-full flex-col gap-3">
-                        {barbershop.phones.map((phone, index) => (
-                        <PhoneItem key={index} phone={phone} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex w-full flex-col items-center gap-2.5 px-0 pb-0 pt-[60px]">
-                    <div className="flex w-full flex-col items-start justify-center gap-1.5 bg-secondary px-[30px] py-8 text-xs leading-none">
-                        <p className="font-semibold text-foreground">
-                            © 2025 Copyright Aparatus
-                        </p>
-                        <p className="font-normal text-muted-foreground">
-                            Todos os direitos reservados.
-                        </p>
+                        ) : (
+                            <BookingCalendarCard
+                                selectedDate={selectedDate}
+                                onDateSelect={handleDateSelect}
+                                availableTimeSlots={availableTimeSlots}
+                                isLoadingTimeSlots={isLoadingTimeSlots}
+                                selectedTime={selectedTime}
+                                onTimeSelect={setSelectedTime}
+                                totalPriceInReais={totalPriceInReais}
+                                isConfirmDisabled={isConfirmDisabled}
+                                isBookingPending={isBookingPending}
+                                onConfirmBooking={handleBookingSubmit}
+                                onBackStep={() => setStep("services")}
+                            />
+                        )}
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 };
 
-export default BarbershopPage;
+export default BarbershopDetailsPage;
