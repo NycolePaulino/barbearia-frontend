@@ -20,7 +20,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-    title: "AparatuƧ - Encontre sua barbearia",
+    title: "AparatuƧ",
     description: "Encontre a barbearia perfeita para você.",
 };
 

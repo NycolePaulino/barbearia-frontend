@@ -199,16 +199,17 @@ const BarbershopDetailsPage = () => {
 
                             <div className="flex-grow max-w-sm">
                                 <label className="flex flex-col min-w-40 h-12 w-full">
-                                    <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
-                                        <div className="text-text-secondary-light dark:text-text-secondary-dark flex bg-surface-light dark:bg-surface-dark items-center justify-center pl-4 rounded-l-lg border border-border-light dark:border-border-dark border-r-0">
-                                            <Icon icon="material-symbols:search" className="text-lg" />
-                                        </div>
-                                        <input
-                                            className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-primary-light dark:text-text-primary-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark h-full placeholder:text-text-secondary-light dark:placeholder:text-text-secondary-dark px-4 rounded-l-none border-l-0 pl-2 text-base font-normal"
-                                            placeholder="Pesquisar por um serviço..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                        />
+                                    <div className="flex w-full items-center rounded-lg h-full border border-border bg-card-light dark:bg-card-dark overflow-hidden">
+                                    <div className="flex items-center justify-center h-full px-4 border-r border-border text-muted-light dark:text-muted-dark bg-card-light dark:bg-card-dark">
+                                        <Icon icon="material-symbols:search" className="text-lg" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="flex-1 h-full bg-transparent px-3 outline-none border-none focus:ring-0 text-base font-normal placeholder:text-muted-light dark:placeholder:text-muted-dark text-text-primary-light dark:text-text-primary-dark"
+                                        placeholder="Pesquisar por um serviço..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
                                     </div>
                                 </label>
                             </div>
