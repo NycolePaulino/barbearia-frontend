@@ -21,9 +21,9 @@ const config = {
         },
         extend: {
             fontFamily: {
-                display: ["Playfair Display", "serif"],
-                body: ["Lato", "sans-serif"],
-                sans: ["Lato", "sans-serif"],
+                display: ["Playfair Display", "serif"], 
+                body: ["Manrope", "sans-serif"], 
+                sans: ["Manrope", "sans-serif"], 
             },
             colors: {
                 primary: "#10B981",
@@ -41,6 +41,11 @@ const config = {
                 "text-primary-dark": "#f5f5f5",
                 "text-secondary-light": "#5c6a77",
                 "text-secondary-dark": "#a0b0c0",
+
+                success: "#28a745",
+                danger: "#dc3545",
+                "subtle-light": "#6c757d",
+                "subtle-dark": "#a0a0a0",
 
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",

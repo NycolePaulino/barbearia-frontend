@@ -19,6 +19,12 @@
     --accent-foreground: 210 29% 16%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    --success: 134 61% 41%; 
+    --success-foreground: 0 0% 100%;
+    --danger: 354 70% 54%; 
+    --danger-foreground: 0 0% 100%;
+
     --border: 220 13% 91%;
     --input: 0 0% 100%;
     --ring: 160 84% 39%;
@@ -45,6 +51,12 @@
     --accent-foreground: 240 10% 99%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+
+    --success: 134 61% 41%;
+    --success-foreground: 0 0% 100%;
+    --danger: 354 70% 54%;
+    --danger-foreground: 0 0% 100%;
+
     --border: 215 16% 32%;
     --input: 210 22% 21%;
     --ring: 160 84% 39%;
@@ -60,9 +72,6 @@
     }
     body {
         @apply bg-background text-foreground font-body antialiased;
-    }
-    h1, h2, h3, h4, h5, h6 {
-        @apply font-display;
     }
 }
 

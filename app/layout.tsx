@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Lato } from "next/font/google";
+import { Playfair_Display, Manrope } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "./_components/ui/sonner";
 import { AuthProvider } from "../lib/auth";
 import QueryProvider from "./_providers/query-provider";
-import { Icon } from "@iconify/react";
 
 const playfair = Playfair_Display({
     subsets: ["latin"],
@@ -14,9 +13,9 @@ const playfair = Playfair_Display({
     variable: "--font-display",
 });
 
-const lato = Lato({
+const manrope = Manrope({ 
     subsets: ["latin"],
-    weight: ["400", "700"],
+    weight: ["400", "500", "600", "700", "800"], 
     variable: "--font-body",
 });
 
@@ -33,7 +32,7 @@ export default function RootLayout({
     return (
         <html lang="pt-BR" className="light" suppressHydrationWarning>
             <body
-                className={`${playfair.variable} ${lato.variable} bg-background-light dark:bg-background-dark font-body text-text-light dark:text-text-dark antialiased`}
+                className={`${playfair.variable} ${manrope.variable}  bg-background-light dark:bg-background-dark font-body text-text-light dark:text-text-dark antialiased`}
             >
                 <AuthProvider>
                     <QueryProvider>

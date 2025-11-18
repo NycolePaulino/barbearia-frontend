@@ -30,7 +30,7 @@ const BarbershopCard = ({ barbershop }: { barbershop: Barbershop }) => {
 
             <div className="p-5 flex flex-col flex-1">
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-display text-xl font-bold">
+                    <h3 className="text-xl font-bold">
                         {barbershop.name}
                     </h3>
                     <div className="flex items-center gap-1 text-primary">
