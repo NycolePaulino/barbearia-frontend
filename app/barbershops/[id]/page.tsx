@@ -14,6 +14,7 @@ import ServiceItem from "../../_components/service-item";
 import BarbershopInfo from "../../_components/barbershop-info";
 import BookingSummaryCard from "../../_components/booking-summary-card";
 import BookingCalendarCard from "../../_components/booking-calendar-card";
+import Header from "../../_components/header";
 
 interface Service {
     id: string;
@@ -177,6 +178,7 @@ const BarbershopDetailsPage = () => {
 
     return (
         <main className="layout-container flex h-full grow flex-col">
+            <Header/>
             <div className="container mx-auto flex flex-1 flex-col px-6 py-8">
                 <div className="flex items-center gap-2 mb-6">
                     <Link
