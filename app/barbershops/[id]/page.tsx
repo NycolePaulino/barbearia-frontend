@@ -125,37 +125,49 @@ const BarbershopDetailsPage = () => {
         const serviceToBook = selectedServices[0];
 
         try {
-            const response = await fetch("http://localhost:8080/api/checkout/create-session", {
+            const bookingResponse = await fetch("http://localhost:8080/api/bookings", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
+                    barbershopId: barbershopId,
                     serviceId: serviceToBook.id,
                     date: date.toISOString(),
-                }),
+                    status: "PENDING"
+                })
             });
 
-            if (!response.ok) {
-                toast.error("Falha ao iniciar o processo de pagamento.");
-                setIsBookingPending(false);
-                return;
+            if (!bookingResponse.ok) throw new Error("Erro ao criar reserva");
+            const bookingData = await bookingResponse.json();
+            const bookingId = bookingData.id;
+
+            const paymentResponse = await fetch("http://localhost:8080/api/payments/checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    bookingId: bookingId,
+                    serviceName: serviceToBook.name,
+                    price: Number(serviceToBook.priceInCents) / 100 
+                })
+            });
+
+            if (!paymentResponse.ok) throw new Error("Erro ao criar pagamento");
+            const paymentData = await paymentResponse.json();
+
+            if (paymentData.url) {
+                window.location.href = paymentData.url;
             }
 
-            const { checkoutUrl } = await response.json();
-            if (!checkoutUrl) {
-                toast.error("Erro ao gerar o link de pagamento.");
-                setIsBookingPending(false);
-                return;
-            }
-
-            window.location.href = checkoutUrl;
-        } catch {
-            toast.error("Erro ao conectar com o servidor de pagamento.");
+        } catch (error) {
+        } finally {
             setIsBookingPending(false);
         }
-    };
+    }
 
     if (isLoadingBarbershop) {
         return (

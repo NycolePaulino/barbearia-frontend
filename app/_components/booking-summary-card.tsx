@@ -80,7 +80,7 @@ const BookingSummaryCard = ({
         
         <div className="mt-4 flex items-center gap-2 text-text-secondary-light dark:text-text-secondary-dark">
             <Icon icon="material-symbols:credit-card" className="text-base" />
-            <p className="text-xs">O pagamento é feito no local.</p>
+            <p className="text-xs">Pagamento seguro via Stripe.</p>
         </div>
         </div>
     );
